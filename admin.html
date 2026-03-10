@@ -1,0 +1,1550 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lamaa — Admin</title>
+  <style>
+    :root{
+      --bg1:#e6f7ff; --bg2:#f0fffb; --ink:#0f1a2b;
+      --card:#ffffff; --line:#e6eef8;
+      --red:#ef4444; --green:#00d2a0; --blue:#0ea5e9;
+      --muted:#5f7aa3;
+    }
+    *{box-sizing:border-box}
+    body{
+      font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+      background:
+        radial-gradient(1200px 700px at 80% -10%, var(--bg1), transparent 60%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+      color:var(--ink); margin:0;
+    }
+    header{
+      display:flex;align-items:center;gap:12px;
+      padding:10px 14px;
+      background:linear-gradient(135deg,rgba(14,165,233,.12),rgba(0,210,160,.10)),#ffffffaa;
+      border-bottom:1px solid var(--line);
+      backdrop-filter:saturate(1.2) blur(2px);
+      position:sticky;top:0;z-index:5;
+    }
+    header img{width:44px;height:44px;border-radius:10px;box-shadow:0 3px 10px rgba(0,0,0,.06)}
+    header h3{margin:0;font-size:1.15rem}
+    header small{color:var(--muted)}
+    .wrap{max-width:980px;margin:12px auto 96px;padding:0 12px}
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:14px;
+      margin:10px 0;
+      box-shadow:0 8px 22px rgba(0,0,0,.05);
+      position:relative;
+    }
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .empty{opacity:.8;text-align:center;padding:16px}
+    .section-title{margin:10px 0 0;font-size:.95rem;color:#123}
+    .queue-col{position:absolute;top:10px;right:10px;display:flex;flex-direction:column;align-items:center;gap:6px}
+    .queue-badge{
+      min-width:38px;height:38px;display:grid;place-items:center;
+      background:#111827;color:#fff;border-radius:999px;
+      font-weight:800;font-size:17px;
+      box-shadow:0 5px 18px rgba(0,0,0,.32);
+    }
+    .queue-label{font-size:10px;color:#6b7280;font-weight:700}
+    .label{font-size:11px;color:#6b7280}
+    .field{font-size:13px;margin-top:2px}
+    .badge{font-size:10px;padding:2px 6px;border-radius:999px;background:#f3f4ff;color:#4b5563}
+    .car-plate{display:inline-flex;align-items:center;gap:6px;margin-top:4px}
+    .car-plate span.code{
+      padding:2px 6px;border-radius:6px;border:1px solid #d1d5db;
+      font-size:11px;font-weight:700;color:#111827
+    }
+    .car-plate span.num{
+      font-size:13px;font-weight:800;color:#111827;
+      padding:2px 6px;border-radius:4px;background:#f9fafb
+    }
+
+    /* FABs */
+    #whOpenFab,#reportFab{
+      position:fixed;bottom:18px;z-index:40;
+      padding:10px 14px;border-radius:999px;
+      display:flex;align-items:center;gap:6px;
+      box-shadow:0 8px 22px rgba(15,23,42,.25);
+      font-size:13px;border:none;cursor:pointer;font-weight:800;color:#fff;
+    }
+    #whOpenFab{left:16px;background:#0ea5e9}
+    #reportFab{left:170px;background:#111827}
+    #whOpenFab span.icon,#reportFab span.icon{font-size:16px}
+
+    /* Backdrops + modals */
+    #whBackdrop,#reportBackdrop{
+      position:fixed;inset:0;background:rgba(15,23,42,.35);
+      display:none;z-index:48;
+    }
+    #whModal,#reportModal{
+      position:fixed;inset:0;display:none;z-index:50;
+      place-items:center;pointer-events:none;
+    }
+    #whModal .wh-box,#reportModal .report-box{
+      width:min(800px,96vw);max-height:88vh;overflow:auto;
+      background:#ffffff;border-radius:18px;
+      padding:16px 14px 14px;
+      box-shadow:0 16px 46px rgba(15,23,42,.32);
+      pointer-events:auto;
+    }
+    .wh-title,.report-title{
+      display:flex;justify-content:space-between;align-items:center;gap:8px
+    }
+    .wh-title h4,.report-title h4{margin:0;font-size:15px}
+    .wh-close,.report-close{
+      border:none;background:transparent;font-size:20px;cursor:pointer
+    }
+
+    /* Working hours grid */
+    .wh-grid{margin-top:10px;display:flex;flex-direction:column;gap:8px;font-size:12px}
+    .wh-row{
+      display:grid;
+      grid-template-columns:72px 1fr 1.6fr 1.8fr;
+      gap:6px;align-items:center;
+      padding:6px 8px;border-radius:10px;
+      border:1px solid #e5e7eb;background:#f9fafb
+    }
+    .wh-day-label{font-weight:700;color:#111827;font-size:11px}
+    .wh-period{display:flex;align-items:center;gap:4px;font-size:11px;color:#374151}
+    .wh-period input[type="time"]{
+      padding:4px 6px;border-radius:6px;border:1px solid #e5e7eb;font-size:11px
+    }
+    .wh-switch{display:flex;align-items:center;gap:4px;font-size:10px}
+    .wh-switch input{accent-color:#0ea5e9}
+    .wh-mini{font-size:10px}
+    .wh-muted{color:#6b7280}
+    .wh-actions{margin-top:10px;display:flex;justify-content:flex-end;gap:8px}
+    .wh-btn,.report-btn{
+      padding:7px 12px;border-radius:10px;border:none;
+      font-size:12px;font-weight:700;cursor:pointer
+    }
+    .wh-btn.secondary{background:#f3f4ff;color:#111827;border:1px solid #e5e7eb}
+    .wh-btn.primary{background:#0ea5e9;color:#fff}
+
+    /* Daily report */
+    .report-filters{
+      margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px
+    }
+    .report-filters input[type="date"]{
+      padding:6px 8px;border-radius:8px;border:1px solid #e5e7eb;font-size:12px
+    }
+    .report-btn.load{background:#0ea5e9;color:#fff}
+    .report-btn.pdf{background:#111827;color:#fff}
+    .report-table-wrap{margin-top:10px}
+    table.report-table{width:100%;border-collapse:collapse;font-size:11px}
+    table.report-table thead{background:#f3f4ff}
+    table.report-table th,table.report-table td{
+      padding:6px 4px;border-bottom:1px solid #e5e7eb;text-align:center;white-space:nowrap
+    }
+    #reportEmpty{margin-top:14px}
+    /* مجموع الأسعار */
+    #reportTotal{
+      margin-top:6px;
+      font-size:12px;
+      font-weight:700;
+      text-align:right;
+      display:none;
+    }
+
+    /* Tools / status style */
+    .tools{
+      margin-top:14px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+    .tools button{
+      padding:8px 18px;
+      border:none;
+      border-radius:10px;
+      font-size:13px;
+      font-weight:700;
+      cursor:pointer;
+      color:#fff;
+    }
+    .tools .blue{background:#0ea5e9;}
+    .tools .green{background:#10b981;}
+    .tools .red{background:#ef4444;}
+    .tools button:disabled{
+      opacity:.7;
+      cursor:default;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      padding:4px 10px;
+      border-radius:999px;
+      font-size:11px;
+      background:#eff6ff;
+      color:#1f2937;
+      margin-bottom:6px;
+    }
+    .queue-time{
+      font-size:9px;
+      color:#6b7280;
+    }
+    .ghost{
+      padding:8px 16px;
+      border-radius:20px;
+      border:1px solid #e5e7eb;
+      background:#f9fafb;
+      font-size:16px;
+      cursor:pointer;
+    }
+
+    /* Settings FAB */
+    #settingsFab{
+      position:fixed;
+      bottom:18px;
+      left:16px;
+      z-index:60;
+      padding:10px 14px;
+      border-radius:999px;
+      display:flex;
+      align-items:center;
+      gap:6px;
+      box-shadow:0 8px 22px rgba(15,23,42,.25);
+      font-size:13px;
+      border:none;
+      cursor:pointer;
+      font-weight:800;
+      color:#fff;
+      background:#0f172a;
+    }
+    #settingsFab span.icon{font-size:16px}
+
+    /* إخفاء الأزرار القديمة (ما زالت موجودة للكود فقط) */
+    #whOpenFab,#reportFab{
+      display:none !important;
+    }
+
+    /* Settings modal */
+    #settingsBackdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(15,23,42,.35);
+      display:none;
+      z-index:70;
+    }
+    #settingsModal{
+      position:fixed;
+      inset:0;
+      display:none;
+      z-index:71;
+      place-items:center;
+      pointer-events:none;
+    }
+    #settingsModal .settings-box{
+      width:min(420px,94vw);
+      max-height:80vh;
+      overflow:auto;
+      background:#ffffff;
+      border-radius:18px;
+      padding:16px 14px 14px;
+      box-shadow:0 16px 46px rgba(15,23,42,.32);
+      pointer-events:auto;
+    }
+    .settings-title{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:8px;
+      margin-bottom:6px;
+    }
+    .settings-title h4{margin:0;font-size:15px}
+    .settings-close{
+      border:none;
+      background:transparent;
+      font-size:20px;
+      cursor:pointer;
+    }
+    .settings-pin-info{
+      font-size:12px;
+      color:#6b7280;
+      margin-bottom:8px;
+    }
+    .settings-pin-row{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      margin-bottom:6px;
+    }
+    #settingsPinInput{
+      flex:1;
+      padding:6px 8px;
+      border-radius:10px;
+      border:1px solid #e5e7eb;
+      font-size:14px;
+      text-align:center;
+      letter-spacing:4px;
+    }
+    #settingsPinError{
+      font-size:11px;
+      color:#ef4444;
+      display:none;
+      margin-bottom:8px;
+    }
+    .settings-actions{
+      margin-top:8px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .settings-actions button{
+      width:100%;
+      padding:9px 12px;
+      border-radius:12px;
+      border:none;
+      font-size:13px;
+      font-weight:700;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .settings-actions button .left{
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .settings-actions button .icon{
+      font-size:17px;
+    }
+    .settings-actions .settings-report{
+      background:#0ea5e9;
+      color:#fff;
+    }
+    .settings-actions .settings-hours{
+      background:#10b981;
+      color:#fff;
+    }
+    .settings-actions .settings-price{
+      background:#f97316;
+      color:#fff;
+    }
+
+    /* Price modal */
+    #priceBackdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(15,23,42,.35);
+      display:none;
+      z-index:72;
+    }
+    #priceModal{
+      position:fixed;
+      inset:0;
+      display:none;
+      z-index:73;
+      place-items:center;
+      pointer-events:none;
+    }
+    #priceModal .price-box{
+      width:min(420px,94vw);
+      max-height:80vh;
+      overflow:auto;
+      background:#ffffff;
+      border-radius:18px;
+      padding:16px 14px 14px;
+      box-shadow:0 16px 46px rgba(15,23,42,.32);
+      pointer-events:auto;
+    }
+    .price-title{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:8px;
+      margin-bottom:6px;
+    }
+    .price-title h4{margin:0;font-size:15px}
+    .price-close{
+      border:none;
+      background:transparent;
+      font-size:20px;
+      cursor:pointer;
+    }
+    .price-body{
+      font-size:12px;
+      color:#374151;
+    }
+    .price-body label{
+      display:block;
+      margin-top:8px;
+      margin-bottom:4px;
+      font-size:12px;
+    }
+    .price-body input[type="number"]{
+      width:100%;
+      padding:7px 8px;
+      border-radius:10px;
+      border:1px solid #e5e7eb;
+      font-size:13px;
+    }
+    .price-actions{
+      margin-top:10px;
+      display:flex;
+      justify-content:flex-end;
+      gap:8px;
+    }
+    #priceSaveBtn{
+      padding:7px 12px;
+      border-radius:10px;
+      border:none;
+      background:#0ea5e9;
+      color:#fff;
+      font-size:12px;
+      font-weight:700;
+      cursor:pointer;
+    }
+    #priceStatus{
+      font-size:11px;
+      color:#16a34a;
+      margin-top:4px;
+      display:none;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <img src="https://i.ibb.co/k2wtWBrW/unnamed.jpg" alt="Lamaa logo">
+  <div>
+    <h3>Lamaa — Admin Panel</h3>
+    <small id="permNote">Notifications enabled ✅</small>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="card">
+    <div class="section-title">Current queue / Requests</div>
+    <div id="list"></div>
+  </div>
+</div>
+
+<!-- زر الإعدادات الجديد -->
+<button id="settingsFab">
+  <span class="icon">⚙️</span><span>الإعدادات</span>
+</button>
+
+<!-- الأزرار القديمة (مخفية عبر CSS لكن نتركها للكود) -->
+<button id="whOpenFab">
+  <span class="icon">🕒</span><span>ضبط أوقات العمل</span>
+</button>
+<button id="reportFab">
+  <span class="icon">📊</span><span>تقرير يومي</span>
+</button>
+
+<!-- Working hours modal -->
+<div id="whBackdrop"></div>
+<div id="whModal">
+  <div class="wh-box">
+    <div class="wh-title">
+      <h4>أوقات العمل الرسمية</h4>
+      <button class="wh-close" id="whCloseBtn">×</button>
+    </div>
+    <div class="wh-mini wh-muted">
+      هذه الأوقات تستخدم لتحديد "متاح" أو "خارج أوقات العمل" في صفحة الزبون.
+    </div>
+    <div class="wh-grid" id="whGrid"></div>
+    <div class="wh-actions">
+      <button class="wh-btn secondary" id="whReset">استعادة الافتراضي</button>
+      <button class="wh-btn primary" id="whSave">حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Daily report modal -->
+<div id="reportBackdrop"></div>
+<div id="reportModal">
+  <div class="report-box">
+    <div class="report-title">
+      <h4>تقرير الطلبات المكتملة</h4>
+      <button class="report-close" id="reportCloseBtn">×</button>
+    </div>
+    <div class="report-filters">
+      <label>من:
+        <input type="date" id="reportFrom">
+      </label>
+      <label>إلى:
+        <input type="date" id="reportTo">
+      </label>
+      <button class="report-btn load" id="reportLoadBtn">عرض</button>
+      <button class="report-btn pdf" id="reportPdfBtn" disabled>تصدير PDF</button>
+      <span class="wh-mini wh-muted">يشمل فقط الطلبات التي حالتها <b>completed</b>.</span>
+    </div>
+    <div class="report-table-wrap">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>لوحة المركبة</th>
+            <th>السعر</th>
+            <th>مدة التنفيذ</th>
+            <th>المسافة (كم)</th>
+          </tr>
+        </thead>
+        <tbody id="reportTableBody"></tbody>
+      </table>
+      <div id="reportEmpty" class="empty" style="display:none">
+        لا توجد طلبات مكتملة في هذه الفترة.
+      </div>
+      <div id="reportTotal"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings modal (PIN + shortcuts) -->
+<div id="settingsBackdrop"></div>
+<div id="settingsModal">
+  <div class="settings-box">
+    <div class="settings-title">
+      <h4>الإعدادات</h4>
+      <button class="settings-close" id="settingsCloseBtn">×</button>
+    </div>
+    <div id="settingsPinSection">
+      <div class="settings-pin-info">
+        الرجاء إدخال الرقم السري للوصول إلى الإعدادات المتقدمة.
+      </div>
+      <div class="settings-pin-row">
+        <input type="password" id="settingsPinInput" maxlength="4" inputmode="numeric" autocomplete="off" />
+        <button class="wh-btn primary" id="settingsPinSubmit">دخول</button>
+      </div>
+      <div id="settingsPinError">الرقم السري غير صحيح.</div>
+    </div>
+    <div id="settingsActions" style="display:none">
+      <div class="settings-pin-info">
+        تم فتح الإعدادات. اختر أحد الخيارات أدناه.
+      </div>
+      <div class="settings-actions">
+        <button class="settings-report" id="settingsReportBtn">
+          <span class="left">
+            <span class="icon">📊</span>
+            <span>تقرير الطلبات</span>
+          </span>
+          <span>فتح</span>
+        </button>
+        <button class="settings-hours" id="settingsWhBtn">
+          <span class="left">
+            <span class="icon">🕒</span>
+            <span>ضبط أوقات العمل</span>
+          </span>
+          <span>فتح</span>
+        </button>
+        <button class="settings-price" id="settingsPriceBtn">
+          <span class="left">
+            <span class="icon">💰</span>
+            <span>تغيير السعر</span>
+          </span>
+          <span>فتح</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Price modal -->
+<div id="priceBackdrop"></div>
+<div id="priceModal">
+  <div class="price-box">
+    <div class="price-title">
+      <h4>تغيير السعر الافتراضي</h4>
+      <button class="price-close" id="priceCloseBtn">×</button>
+    </div>
+    <div class="price-body">
+      <p>
+        هنا تضبط الأسعار حسب نوع السيارة ونوع الغسيل.
+        هذه القيم تُخزَّن في Firestore في المستند <code>config/pricing</code>،
+        ويقرأها برنامج العميل مباشرة.
+      </p>
+
+      <label for="saloonExtInput">صالون – غسيل خارجي (ريال عماني)</label>
+      <input type="number" id="saloonExtInput" min="0" step="0.1" placeholder="مثال: 4.0">
+
+      <label for="saloonIntInput">صالون – غسيل داخلي (ريال عماني)</label>
+      <input type="number" id="saloonIntInput" min="0" step="0.1" placeholder="مثال: 5.0">
+
+      <label for="suvExtInput">فورويل – غسيل خارجي (ريال عماني)</label>
+      <input type="number" id="suvExtInput" min="0" step="0.1" placeholder="مثال: 5.0">
+
+      <label for="suvIntInput">فورويل – غسيل داخلي (ريال عماني)</label>
+      <input type="number" id="suvIntInput" min="0" step="0.1" placeholder="مثال: 6.0">
+
+      <div class="price-actions">
+        <button id="priceSaveBtn">حفظ</button>
+      </div>
+      <div id="priceStatus">تم حفظ الأسعار بنجاح.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Libs -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<!-- Firebase + auth + notifications -->
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyC_kRUAmKIFQwWK0Xrr8PeebnQbWGauu34",
+    authDomain: "wash-a7ef9.firebaseapp.com",
+    projectId: "wash-a7ef9",
+    storageBucket: "wash-a7ef9.appspot.com",
+    messagingSenderId: "244309029995",
+    appId: "1:244309029995:web:b5cb0534edce26aac3ed2e"
+  };
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+  const db = firebase.firestore();
+
+  async function ensureAuth() {
+    const auth = firebase.auth();
+    if (auth.currentUser) return auth.currentUser;
+    try { await auth.signInAnonymously(); }
+    catch(e){ console.warn("[admin] anon sign-in error", e); }
+    return new Promise((resolve, reject)=>{
+      const to=setTimeout(()=>reject(new Error("auth-timeout")),8000);
+      const unsub=firebase.auth().onAuthStateChanged(u=>{
+        if(u){ clearTimeout(to);unsub();resolve(u); }
+      });
+    });
+  }
+
+  if ("Notification" in window) {
+    Notification.requestPermission().then(p=>{
+      const el=document.getElementById("permNote");
+      if(!el) return;
+      el.textContent = (p==="granted")
+        ? "Notifications enabled ✅"
+        : "🔔 Enable notifications from your browser";
+    });
+  }
+</script>
+
+<!-- Queue + bookings listener -->
+<script>
+  const list = document.getElementById("list");
+  window.__ordersAll = [];
+
+  // New booking alert sound
+  const newBookingAudio = new Audio("new_booking_alert.mp3");
+  newBookingAudio.preload = "auto";
+
+  function playNewBookingAlert(){
+    try {
+      newBookingAudio.currentTime = 0;
+      newBookingAudio.play().catch(err => {
+        console.warn("audio play blocked", err);
+      });
+    } catch (e) {
+      console.warn("audio error", e);
+    }
+
+    if ("Notification" in window && Notification.permission === "granted") {
+      try {
+        new Notification("طلب غسيل جديد", {
+          body: "يوجد حجز جديد في قائمة لمعة.",
+          icon: "https://i.ibb.co/k2wtWBrW/unnamed.jpg"
+        });
+      } catch (e) {
+        console.warn("notification error", e);
+      }
+    }
+  }
+
+  // Ignore first snapshot to avoid alerts on old data
+  let firstBookingsSnapshot = true;
+
+
+  function statusLabel(st){
+    if (st === "pending") return "Status: Pending";
+    if (st === "accepted") return "Status: Accepted";
+    if (st === "confirmed") return "Status: Paid/Confirmed";
+    if (st === "completed") return "Status: Completed";
+    if (st === "rejected") return "Status: Rejected";
+    return "Status: -";
+  }
+
+  function fmtShort(ts){
+    if(!ts) return "-";
+    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    return d.toLocaleString("en-GB", {
+      month:"short", day:"2-digit", year:"numeric",
+      hour:"2-digit", minute:"2-digit", hour12:false
+    });
+  }
+
+  function renderQueue(items){
+    list.innerHTML = "";
+    if (!items.length){
+      list.innerHTML = '<div class="empty">لا توجد طلبات حالية.</div>';
+      return;
+    }
+
+    items.forEach((x, idx)=>{
+      const el = document.createElement("div");
+      el.className = "card";
+
+      const plate = `${(x.carCode || "").toString().toUpperCase()} ${x.carNumber || ""}`.trim();
+      const acceptedOrPaid = (x.status === "accepted" || x.status === "confirmed");
+      const pos = idx + 1;
+
+      el.innerHTML = `
+        <div class="queue-col">
+          <div class="queue-badge">${pos}</div>
+          <div class="queue-label">الدور</div>
+          <div class="queue-time">${fmtShort(x.createdAtMs || x.createdAt)}</div>
+        </div>
+
+        <div class="pill">${statusLabel(x.status)}</div>
+
+        <div class="section-title">Customer</div>
+        <div class="row">
+          <div><b>Phone:</b> ${x.phone || "-"}</div>
+          <div><b>Car Type:</b> ${x.carType || "-"}</div>
+          <div><b>Wash:</b> ${x.package || "-"}</div>
+          <div><b>Price:</b> ${x.price != null ? x.price : "-"}</div>
+        </div>
+
+        <div class="section-title">Vehicle</div>
+        <div class="row">
+          <div><b>Plate:</b> ${plate || "-"}</div>
+        </div>
+
+        <div class="section-title">Location</div>
+        <div class="row" style="justify-content:flex-end">
+          <button class="ghost" onclick="openDirections('${x.lat || ""}','${x.lng || ""}')">
+            📍 location
+          </button>
+        </div>
+
+        <div class="tools">
+          <button
+            class="${acceptedOrPaid ? "green" : "blue"}"
+            id="assign-${x.id}"
+            ${acceptedOrPaid ? "disabled" : ""}
+            onclick="markAccepted('${x.id}', this)">
+            ${acceptedOrPaid ? "Accepted/Paid" : "Accept"}
+          </button>
+
+          <button
+            class="green"
+            id="done-${x.id}"
+            onclick="markCompleted('${x.id}', this)">
+            Complete ✓
+          </button>
+
+          <button
+            class="red"
+            id="reject-${x.id}"
+            onclick="markRejected('${x.id}', this)">
+            Reject ✖
+          </button>
+        </div>
+      `;
+
+      list.appendChild(el);
+    });
+  }
+
+  // subscribe to bookings
+  ensureAuth().catch(()=>{}).finally(()=>{
+    db.collection("bookings")
+      .orderBy("createdAtMs")
+      .onSnapshot(snap=>{
+        const all = [];
+        const queueArr = [];
+
+        let hasNewPending = false;
+        snap.docChanges().forEach(change => {
+          if (!firstBookingsSnapshot && change.type === "added") {
+            const d = { id: change.doc.id, ...change.doc.data() };
+            if (d && d.status === "pending") {
+              hasNewPending = true;
+            }
+          }
+        });
+
+        snap.forEach(doc=>{
+          const d = { id: doc.id, ...doc.data() };
+          if (!d) return;
+          all.push(d);
+          if (d.status === "pending" || d.status === "accepted" || d.status === "confirmed") {
+            queueArr.push(d);
+          }
+        });
+        window.__ordersAll = all;
+        renderQueue(queueArr);
+
+        if (hasNewPending) {
+          playNewBookingAlert();
+        }
+
+        firstBookingsSnapshot = false;
+      },err=>{
+        console.warn("[bookings] snapshot error", err);
+        list.innerHTML = '<div class="empty">خطأ في تحميل البيانات من السيرفر.</div>';
+      });
+  });
+</script>
+
+<!-- Actions: Accept / Complete / Reject + location -->
+<script>
+async function markAccepted(id, btn){
+  try{
+    btn.disabled = true;
+    await ensureAuth().catch(()=>{});
+    await db.collection("bookings").doc(id).update({
+      status: "accepted"
+    });
+  }catch(e){
+    console.warn("accept error", e);
+    alert("تعذر تنفيذ قبول الطلب.");
+    btn.disabled = false;
+  }
+}
+
+async function markCompleted(id, btn){
+  if (!confirm("تأكيد إنهاء الطلب؟")) return;
+  try{
+    btn.disabled = true;
+    await ensureAuth().catch(()=>{});
+    await db.collection("bookings").doc(id).update({
+      status: "completed",
+      completedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }catch(e){
+    console.warn("complete error", e);
+    alert("تعذر تنفيذ إنهاء الطلب.");
+    btn.disabled = false;
+  }
+}
+
+async function markRejected(id, btn){
+  if (!confirm("تأكيد رفض الطلب؟")) return;
+  try{
+    btn.disabled = true;
+    await ensureAuth().catch(()=>{});
+    await db.collection("bookings").doc(id).update({
+      status: "rejected"
+    });
+  }catch(e){
+    console.warn("reject error", e);
+    alert("تعذر تنفيذ رفض الطلب.");
+    btn.disabled = false;
+  }
+}
+
+function openDirections(lat, lng){
+  if (!lat || !lng || lat === "undefined" || lng === "undefined"){
+    alert("موقع غير متوفر لهذا الطلب.");
+    return;
+  }
+  const url = `https://www.google.com/maps?q=${lat},${lng}`;
+  window.open(url, "_blank");
+}
+</script>
+
+<!-- Working hours: UI + localStorage -->
+<script>
+(function(){
+  const DAYS = ["السبت","الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس","الجمعة"];
+  const STORAGE_KEY="businessHoursV1";
+  const def=[
+    {closed:false,p1:{from:"08:00",to:"13:00"},p2:{enabled:true,from:"16:00",to:"20:00"}},
+    {closed:false,p1:{from:"08:00",to:"13:00"},p2:{enabled:true,from:"16:00",to:"20:00"}},
+    {closed:false,p1:{from:"08:00",to:"13:00"},p2:{enabled:true,from:"16:00",to:"20:00"}},
+    {closed:false,p1:{from:"08:00",to:"13:00"},p2:{enabled:true,from:"16:00",to:"20:00"}},
+    {closed:false,p1:{from:"08:00",to:"13:00"},p2:{enabled:true,from:"16:00",to:"20:00"}},
+    {closed:false,p1:{from:"08:00",to:"12:00"},p2:{enabled:false,from:"",to:""}},
+    {closed:true ,p1:{from:"",to:""},         p2:{enabled:false,from:"",to:""}}
+  ];
+  const cloneDef=()=>JSON.parse(JSON.stringify(def));
+
+  // قراءة من localStorage (تدعم الشكل القديم والجديد)
+  function load(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return cloneDef();
+      const p = JSON.parse(raw);
+
+      if (Array.isArray(p) && p.length === 7) return p;               // شكل قديم
+      if (p && Array.isArray(p.hours) && p.hours.length === 7)        // شكل جديد
+        return p.hours;
+
+      return cloneDef();
+    }catch(e){
+      return cloneDef();
+    }
+  }
+
+  // حفظ في localStorage مع وقت آخر تعديل
+  function save(hours){
+    try{
+      const payload = {
+        hours,
+        updatedAtMs: Date.now()
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      return true;
+    }catch(e){
+      alert("تعذر الحفظ في هذا المتصفح.");
+      return false;
+    }
+  }
+
+  function buildRow(i){
+    return `
+      <div class="wh-row" data-idx="${i}">
+        <div class="wh-day-label">${DAYS[i]}</div>
+        <div class="wh-switch">
+          <input type="checkbox" class="wh-closed"><span>مغلق</span>
+        </div>
+        <div class="wh-period">
+          <span>١</span>
+          <input type="time" class="wh-p1-from"><span>–</span>
+          <input type="time" class="wh-p1-to">
+        </div>
+        <div class="wh-period">
+          <label><input type="checkbox" class="wh-p2-enabled"> تفعيل ٢</label>
+          <input type="time" class="wh-p2-from"><span>–</span>
+          <input type="time" class="wh-p2-to">
+        </div>
+      </div>`;
+  }
+
+  function renderGrid(c,h){
+    c.innerHTML="";
+    for(let i=0;i<7;i++) c.insertAdjacentHTML("beforeend",buildRow(i));
+    c.querySelectorAll(".wh-row").forEach((row,i)=>{
+      const x=h[i];
+      row.querySelector(".wh-closed").checked=!!x.closed;
+      row.querySelector(".wh-p1-from").value=x.p1.from||"";
+      row.querySelector(".wh-p1-to").value=x.p1.to||"";
+      row.querySelector(".wh-p2-enabled").checked=!!x.p2.enabled;
+      row.querySelector(".wh-p2-from").value=x.p2.from||"";
+      row.querySelector(".wh-p2-to").value=x.p2.to||"";
+    });
+  }
+
+  function collect(c){
+    const h=[];let ok=true;
+    c.querySelectorAll(".wh-row").forEach((row,i)=>{
+      if(!ok) return;
+      const closed=row.querySelector(".wh-closed").checked;
+      const p1f=row.querySelector(".wh-p1-from").value;
+      const p1t=row.querySelector(".wh-p1-to").value;
+      const p2e=row.querySelector(".wh-p2-enabled").checked;
+      const p2f=row.querySelector(".wh-p2-from").value;
+      const p2t=row.querySelector(".wh-p2-to").value;
+
+      if(closed){
+        h[i]={closed:true,p1:{from:"",to:""},p2:{enabled:false,from:"",to:""}};
+        return;
+      }
+      if(!p1f||!p1t){alert("أكمل الفترة الأولى لليوم: "+DAYS[i]);ok=false;return;}
+      if(p1t<=p1f){alert("نهاية الفترة الأولى يجب أن تكون بعد بدايتها ("+DAYS[i]+")");ok=false;return;}
+      if(p2e){
+        if(!p2f||!p2t){alert("أكمل الفترة الثانية لليوم: "+DAYS[i]);ok=false;return;}
+        if(p2t<=p2f){alert("نهاية الفترة الثانية يجب أن تكون بعد بدايتها ("+DAYS[i]+")");ok=false;return;}
+      }
+      h[i]={closed:false,p1:{from:p1f,to:p1t},p2:{enabled:p2e,from:p2f||"",to:p2t||""}};
+    });
+    return ok?h:null;
+  }
+
+  const whBackdrop=document.getElementById("whBackdrop");
+  const whModal=document.getElementById("whModal");
+  const whOpenFab=document.getElementById("whOpenFab");
+  const whClose=document.getElementById("whCloseBtn");
+  const whGrid=document.getElementById("whGrid");
+  const whReset=document.getElementById("whReset");
+  const whSave=document.getElementById("whSave");
+
+  function openModal(){
+    renderGrid(whGrid,load());
+    whBackdrop.style.display="block";
+    whModal.style.display="grid";
+  }
+  function closeModal(){
+    whBackdrop.style.display="none";
+    whModal.style.display="none";
+  }
+
+  if(whOpenFab){
+    whOpenFab.addEventListener("click",openModal);
+  }
+  whClose.addEventListener("click",closeModal);
+  whBackdrop.addEventListener("click",closeModal);
+  whReset.addEventListener("click",()=>renderGrid(whGrid,cloneDef()));
+  whSave.addEventListener("click",()=>{
+    const h=collect(whGrid);
+    if(!h) return;
+    if(save(h)){
+      window.__bh_save_intent = true; // إشارة لنجاح الحفظ المحلي
+      window.dispatchEvent(new CustomEvent("business-hours-updated",{detail:h}));
+      closeModal();
+      alert("تم حفظ أوقات العمل بنجاح.");
+    }
+  });
+
+  window.__getBusinessHours = ()=>load();
+  window.__openWorkingHoursModal = openModal;
+  window.__closeWorkingHoursModal = closeModal;
+})();
+</script>
+
+<!-- Working hours Firestore sync -->
+<script>
+(function(){
+  const STORAGE_KEY="businessHoursV1";
+  if(!(window.firebase && firebase.firestore)){return;}
+  const HOURS_DOC=firebase.firestore().collection("config").doc("businessHours");
+  const SV=firebase.firestore.FieldValue;
+
+  window.__bh_cloud_ready = false;
+  window.__bh_save_intent = false;
+
+  function readLocal(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return null;
+      const p = JSON.parse(raw);
+      if (Array.isArray(p) && p.length===7)
+        return {hours:p, updatedAtMs:0};
+      if (p && Array.isArray(p.hours) && p.hours.length===7)
+        return {hours:p.hours, updatedAtMs:p.updatedAtMs || 0};
+      return null;
+    }catch(e){
+      return null;
+    }
+  }
+
+  function writeLocalFromRemote(hours, updatedAt){
+    try{
+      const updatedAtMs =
+        updatedAt && typeof updatedAt.toMillis==="function"
+          ? updatedAt.toMillis()
+          : Date.now();
+      const payload = {hours, updatedAtMs};
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      window.dispatchEvent(new CustomEvent("business-hours-updated",{detail:hours}));
+    }catch(e){
+      console.warn("[admin-hours] local write error", e);
+    }
+  }
+
+  async function pull(){
+    try{
+      const snap = await HOURS_DOC.get();
+      const d = snap.exists && snap.data();
+      if(d && Array.isArray(d.hours) && d.hours.length===7){
+        const local = readLocal();
+        const remoteMs =
+          d.updatedAt && typeof d.updatedAt.toMillis==="function"
+            ? d.updatedAt.toMillis()
+            : 0;
+        if(!local || remoteMs > (local.updatedAtMs || 0)){
+          writeLocalFromRemote(d.hours, d.updatedAt);
+          window.__bh_cloud_ready = true;
+        }
+      }
+    }catch(e){
+      console.warn("[admin-hours] pull error", e);
+    }
+  }
+
+  // عند حفظ من لوحة الأدمن: ادفع إلى Firestore
+  window.addEventListener("business-hours-updated", async (ev)=>{
+    if(!window.__bh_save_intent) return;
+    try{
+      const hours = ev && ev.detail;
+      if(!(Array.isArray(hours) && hours.length===7)) return;
+      await ensureAuth().catch(()=>{});
+      await HOURS_DOC.set(
+        {hours, updatedAt: SV.serverTimestamp()},
+        {merge:true}
+      );
+      window.__bh_cloud_ready = true;
+    }catch(e){
+      console.warn("[admin-hours] push error", e);
+    }finally{
+      window.__bh_save_intent = false;
+    }
+  });
+
+  // استماع لتعديلات السحابة (تطبق فقط إذا أحدث من المحلي)
+  try{
+    HOURS_DOC.onSnapshot(snap=>{
+      const d = snap.data && snap.data();
+      if(snap.exists && d && Array.isArray(d.hours) && d.hours.length===7){
+        const local = readLocal();
+        const remoteMs =
+          d.updatedAt && typeof d.updatedAt.toMillis==="function"
+            ? d.updatedAt.toMillis()
+            : 0;
+        if(!local || remoteMs > (local.updatedAtMs || 0)){
+          writeLocalFromRemote(d.hours, d.updatedAt);
+          window.__bh_cloud_ready = true;
+        }
+      }
+    });
+  }catch(e){
+    console.warn("[admin-hours] live sub failed", e);
+  }
+
+  pull();
+})();
+</script>
+
+<!-- Daily report using __ordersAll (من / إلى) + مجموع السعر -->
+<script>
+(function(){
+  const reportFab      = document.getElementById("reportFab");
+  const reportBackdrop = document.getElementById("reportBackdrop");
+  const reportModal    = document.getElementById("reportModal");
+  const reportCloseBtn = document.getElementById("reportCloseBtn");
+  const reportFrom     = document.getElementById("reportFrom");
+  const reportTo       = document.getElementById("reportTo");
+  const reportLoadBtn  = document.getElementById("reportLoadBtn");
+  const reportPdfBtn   = document.getElementById("reportPdfBtn");
+  const reportTableBody= document.getElementById("reportTableBody");
+  const reportEmpty    = document.getElementById("reportEmpty");
+  const reportTotal    = document.getElementById("reportTotal");
+  let currentRows      = [];
+
+  function setDefaultRange(){
+    const t=new Date();
+    const y=t.getFullYear();
+    const m=String(t.getMonth()+1).padStart(2,"0");
+    const d=String(t.getDate()).padStart(2,"0");
+    const today=`${y}-${m}-${d}`;
+    if(!reportFrom.value) reportFrom.value=today;
+    if(!reportTo.value)   reportTo.value=today;
+  }
+
+  function openModal(){
+    setDefaultRange();
+    reportBackdrop.style.display="block";
+    reportModal.style.display="grid";
+    loadReport();
+  }
+  function closeModal(){
+    reportBackdrop.style.display="none";
+    reportModal.style.display="none";
+  }
+
+  function readTs(v){
+    if(!v) return null;
+    if(v.toDate) return v.toDate();
+    const d=new Date(v);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  function readPoint(o,latKey,lngKey){
+    if(!o) return null;
+    if(typeof o[latKey]==="number" && typeof o[lngKey]==="number"){
+      return {lat:o[latKey],lng:o[lngKey]};
+    }
+    return null;
+  }
+
+  function haversineKm(lat1,lon1,lat2,lon2){
+    const R=6371;
+    const toRad=x=>x*Math.PI/180;
+    const dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
+    const a=Math.sin(dLat/2)**2 +
+             Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+    const c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+    return R*c;
+  }
+
+  function formatDuration(from, to){
+    if (!from || !to || to < from) return "-";
+    const diff = to - from;
+    const mins = Math.floor(diff / 60000);
+    return `${mins} دقيقة`;
+  }
+
+  function loadReport(){
+    const fromVal = reportFrom.value;
+    const toVal   = reportTo.value;
+    if(!fromVal || !toVal){
+      alert("اختر تاريخ البداية والنهاية.");
+      return;
+    }
+    if(fromVal > toVal){
+      alert("تاريخ البداية يجب أن يكون قبل أو يساوي تاريخ النهاية.");
+      return;
+    }
+
+    const start=new Date(fromVal+"T00:00:00");
+    const end  =new Date(toVal+"T23:59:59");
+
+    reportTableBody.innerHTML="";
+    reportEmpty.style.display="none";
+    reportPdfBtn.disabled=true;
+    reportTotal.style.display="none";
+    reportTotal.textContent = "";
+    currentRows=[];
+    let totalPrice = 0;
+
+    const all = Array.isArray(window.__ordersAll) ? window.__ordersAll : [];
+    let idx=0;
+
+    all.forEach(d=>{
+      if(!d || d.status!=="completed") return;
+
+      const createdAt   = readTs(d.createdAtMs || d.createdAt);
+      const completedAt = readTs(d.completedAt);
+      const ref         = completedAt || createdAt;
+      if(!ref || ref<start || ref>end) return;
+
+      const plate    = (d.carNumber || "") + (d.carCode || "");
+      const priceRaw = d.price ?? d.totalPrice ?? "-";
+      const duration = formatDuration(createdAt, completedAt);
+
+      const lamaa  = readPoint(d,"lamaaLat","lamaaLng");
+      const client = readPoint(d,"clientLat","clientLng");
+      let dist="-";
+      if(lamaa && client){
+        const km=haversineKm(lamaa.lat,lamaa.lng,client.lat,client.lng);
+        if(!Number.isNaN(km)) dist=km.toFixed(2);
+      }
+
+      // تجميع المجموع الكلي للسعر
+      let numericPrice = 0;
+      if (typeof priceRaw === "number") {
+        numericPrice = priceRaw;
+      } else {
+        const parsed = parseFloat(String(priceRaw).replace(/[^\d.]/g,""));
+        if (!Number.isNaN(parsed)) numericPrice = parsed;
+      }
+      totalPrice += numericPrice;
+
+      idx++;
+      const tr=document.createElement("tr");
+      tr.innerHTML=`
+        <td>${idx}</td>
+        <td>${plate || "-"}</td>
+        <td>${priceRaw}</td>
+        <td>${duration}</td>
+        <td>${dist !== "-" ? dist : "-"}</td>`;
+      reportTableBody.appendChild(tr);
+
+      currentRows.push({
+        plate: plate || "-",
+        price: String(priceRaw),
+        duration,
+        distance: dist !== "-" ? (dist+" كم") : "-"
+      });
+    });
+
+    if(!currentRows.length){
+      reportEmpty.style.display="block";
+      reportTotal.style.display="none";
+    }else{
+      reportPdfBtn.disabled=false;
+      reportTotal.style.display="block";
+      reportTotal.textContent = "المجموع الكلي للسعر: " + totalPrice.toFixed(2) + " ريال عماني";
+    }
+  }
+
+  function exportPdf(){
+    if(!currentRows.length || !window.jspdf) return;
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({orientation:"p",unit:"mm",format:"a4"});
+    const fromStr = reportFrom.value || "";
+    const toStr   = reportTo.value || "";
+    doc.setFontSize(14);
+    doc.text(`Report (completed only) - ${fromStr} to ${toStr}`,10,12);
+    doc.setFontSize(10);
+
+    let y=22;
+    doc.text("No",10,y);
+    doc.text("Plate",25,y);
+    doc.text("Price",75,y);
+    doc.text("Duration",105,y);
+    doc.text("Distance (km)",140,y);
+    y+=6;
+
+    currentRows.forEach((r,i)=>{
+      if(y>280){doc.addPage();y=20;}
+      doc.text(String(i+1),10,y);
+      doc.text(String(r.plate),25,y);
+      doc.text(String(r.price),75,y);
+      doc.text(String(r.duration),105,y);
+      doc.text(r.distance.replace(" كم",""),140,y);
+      y+=5;
+    });
+
+    doc.save(`report-completed-${fromStr}_to_${toStr}.pdf`);
+  }
+
+  if(reportFab){
+    reportFab.addEventListener("click",openModal);
+  }
+  reportBackdrop.addEventListener("click",closeModal);
+  reportCloseBtn.addEventListener("click",closeModal);
+  reportLoadBtn.addEventListener("click",loadReport);
+  reportPdfBtn.addEventListener("click",exportPdf);
+
+  window.__openReportModal = openModal;
+  window.__closeReportModal = closeModal;
+})();
+</script>
+
+<!-- Settings logic: PIN + فتح النوافذ -->
+<script>
+(function(){
+  const settingsFab=document.getElementById("settingsFab");
+  const settingsBackdrop=document.getElementById("settingsBackdrop");
+  const settingsModal=document.getElementById("settingsModal");
+  const settingsCloseBtn=document.getElementById("settingsCloseBtn");
+  const settingsPinSection=document.getElementById("settingsPinSection");
+  const settingsActions=document.getElementById("settingsActions");
+  const settingsPinInput=document.getElementById("settingsPinInput");
+  const settingsPinSubmit=document.getElementById("settingsPinSubmit");
+  const settingsPinError=document.getElementById("settingsPinError");
+  const settingsReportBtn=document.getElementById("settingsReportBtn");
+  const settingsWhBtn=document.getElementById("settingsWhBtn");
+  const settingsPriceBtn=document.getElementById("settingsPriceBtn");
+
+  const SECRET_PIN="9133";
+
+  function resetState(){
+    settingsPinSection.style.display="block";
+    settingsActions.style.display="none";
+    settingsPinError.style.display="none";
+    settingsPinInput.value="";
+  }
+
+  function openSettings(){
+    resetState();
+    settingsBackdrop.style.display="block";
+    settingsModal.style.display="grid";
+    setTimeout(()=>settingsPinInput && settingsPinInput.focus(),50);
+  }
+
+  function closeSettings(){
+    settingsBackdrop.style.display="none";
+    settingsModal.style.display="none";
+  }
+
+  function handleSubmit(){
+    const val=(settingsPinInput.value || "").trim();
+    if(val===SECRET_PIN){
+      settingsPinError.style.display="none";
+      settingsPinSection.style.display="none";
+      settingsActions.style.display="block";
+    }else{
+      settingsPinError.style.display="block";
+    }
+  }
+
+  settingsFab.addEventListener("click", openSettings);
+  settingsBackdrop.addEventListener("click", closeSettings);
+  settingsCloseBtn.addEventListener("click", closeSettings);
+  settingsPinSubmit.addEventListener("click", handleSubmit);
+  settingsPinInput.addEventListener("keydown", e=>{
+    if(e.key==="Enter"){ e.preventDefault(); handleSubmit(); }
+  });
+
+  settingsReportBtn.addEventListener("click", ()=>{
+    if(typeof window.__openReportModal==="function"){
+      closeSettings();
+      window.__openReportModal();
+    }else{
+      alert("نافذة التقرير غير متوفرة.");
+    }
+  });
+
+  settingsWhBtn.addEventListener("click", ()=>{
+    if(typeof window.__openWorkingHoursModal==="function"){
+      closeSettings();
+      window.__openWorkingHoursModal();
+    }else{
+      alert("نافذة أوقات العمل غير متوفرة.");
+    }
+  });
+
+  settingsPriceBtn.addEventListener("click", ()=>{
+    closeSettings();
+    if(typeof window.__openPriceModal==="function"){
+      window.__openPriceModal();
+    }else{
+      const backdrop=document.getElementById("priceBackdrop");
+      const modal=document.getElementById("priceModal");
+      if(backdrop && modal){
+        backdrop.style.display="block";
+        modal.style.display="grid";
+      }else{
+        alert("ميزة تغيير السعر سيتم إضافتها لاحقًا.");
+      }
+    }
+  });
+
+  window.__openSettings = openSettings;
+})();
+</script>
+
+<!-- Price modal logic -->
+<script>
+(function(){
+  const priceBackdrop    = document.getElementById("priceBackdrop");
+  const priceModal       = document.getElementById("priceModal");
+  const priceCloseBtn    = document.getElementById("priceCloseBtn");
+  const saloonExtInput   = document.getElementById("saloonExtInput");
+  const saloonIntInput   = document.getElementById("saloonIntInput");
+  const suvExtInput      = document.getElementById("suvExtInput");
+  const suvIntInput      = document.getElementById("suvIntInput");
+  const priceSaveBtn     = document.getElementById("priceSaveBtn");
+  const priceStatus      = document.getElementById("priceStatus");
+
+  if(!priceBackdrop || !priceModal) return;
+
+  function openPrice(){
+    priceBackdrop.style.display = "block";
+    priceModal.style.display    = "grid";
+    if(priceStatus) priceStatus.style.display = "none";
+    setTimeout(()=>saloonExtInput && saloonExtInput.focus(),50);
+    loadPrice();
+  }
+
+  function closePrice(){
+    priceBackdrop.style.display = "none";
+    priceModal.style.display    = "none";
+  }
+
+  function setValue(input, value){
+    if(!input) return;
+    if(typeof value === "number") input.value = value;
+    else if(value == null) input.value = "";
+  }
+
+  function loadPrice(){
+    try{
+      if(!window.db) return;
+      ensureAuth().catch(()=>{}).finally(async ()=>{
+        try{
+          const docRef = db.collection("config").doc("pricing");
+          const snap   = await docRef.get();
+          const d      = snap.exists && snap.data();
+          if(d){
+            setValue(saloonExtInput, d.saloonExternal);
+            setValue(saloonIntInput, d.saloonInternal);
+            setValue(suvExtInput,    d.suvExternal);
+            setValue(suvIntInput,    d.suvInternal);
+          }
+        }catch(e){
+          console.warn("[price] load error", e);
+        }
+      });
+    }catch(e){
+      console.warn("[price] outer load error", e);
+    }
+  }
+
+  function parseNum(raw, label){
+    const trimmed = (raw || "").trim();
+    if(trimmed === "") return null; // مسموح تتركه فاضي لو ما تريده
+    const num = Number(trimmed);
+    if(Number.isNaN(num) || num < 0){
+      throw new Error("القيمة غير صحيحة لحقل: " + label);
+    }
+    return num;
+  }
+
+  function savePrice(){
+    if(!window.db){
+      alert("الاتصال بقاعدة البيانات غير متوفر.");
+      return;
+    }
+    let se, si, sve, svi;
+    try{
+      se  = parseNum(saloonExtInput.value, "صالون – غسيل خارجي");
+      si  = parseNum(saloonIntInput.value, "صالون – غسيل داخلي");
+      sve = parseNum(suvExtInput.value,    "فورويل – غسيل خارجي");
+      svi = parseNum(suvIntInput.value,    "فورويل – غسيل داخلي");
+    }catch(e){
+      alert(e.message);
+      return;
+    }
+
+    ensureAuth().catch(()=>{}).finally(async ()=>{
+      try{
+        const docRef = db.collection("config").doc("pricing");
+        await docRef.set({
+          saloonExternal: se,
+          saloonInternal: si,
+          suvExternal:    sve,
+          suvInternal:    svi,
+          updatedAt:      firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge:true });
+
+        if(priceStatus){
+          priceStatus.style.display = "block";
+          setTimeout(()=>{ priceStatus.style.display = "none"; }, 2500);
+        }
+      }catch(e){
+        console.warn("[price] save error", e);
+        alert("تعذر حفظ الأسعار.");
+      }
+    });
+  }
+
+  priceBackdrop.addEventListener("click", closePrice);
+  priceCloseBtn.addEventListener("click", closePrice);
+  priceSaveBtn.addEventListener("click", savePrice);
+
+  window.__openPriceModal = openPrice;
+})();
+</script>
+
+<script>
+    // ------------------------------------------------------------------
+    // 1. طلب إذن إظهار الإشعارات فور تحميل الصفحة
+    // ------------------------------------------------------------------
+    if ('Notification' in window) {
+        Notification.requestPermission();
+    }
+
+    // ------------------------------------------------------------------
+    // 2. دالة تشغيل الصوت (تنبيه)
+    // ------------------------------------------------------------------
+    function playNewBookingAlertSound() {
+        const audio = new Audio("alert.mp3"); 
+        audio.volume = 1.0; 
+        audio.play().catch(e => {
+            console.log("Audio playback blocked by browser:", e);
+        });
+    }
+
+    // ------------------------------------------------------------------
+    // 3. دالة إظهار إشعار سطح المكتب
+    // ------------------------------------------------------------------
+    function showNewBookingNotification() {
+        if (Notification.permission === "granted") {
+            new Notification("✅ حجز جديد قادم!", {
+                body: "تم استلام طلب غسيل سيارة جديد. الرجاء مراجعة قائمة الدور.",
+                icon: 'https://i.ibb.co/k2wtWBrW/unnamed.jpg'
+            });
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // 4. الدالة الرئيسية للتنبيه المشترك
+    // ------------------------------------------------------------------
+    function alertNewBooking() {
+        playNewBookingAlertSound();
+        showNewBookingNotification();
+    }
+</script>
+</body>
+</html>
