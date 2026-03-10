@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lamaa — Admin</title>
+  <style>
+    :root{
+      --bg1:#e6f7ff; --bg2:#f0fffb; --ink:#0f1a2b;
+      --card:#ffffff; --line:#e6eef8;
+      --red:#ef4444; --green:#00d2a0; --blue:#0ea5e9;
+      --muted:#5f7aa3;
+    }
+    *{box-sizing:border-box}
+    body{
+      font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 700px at 80% -10%, var(--bg1), transparent 60%), linear-gradient(180deg, var(--bg1), var(--bg2));
+      color:var(--ink); margin:0
+    }
+    header{
+      display:flex; align-items:center; gap:12px; padding:10px 14px;
+      background:linear-gradient(135deg, rgba(14,165,233,.12), rgba(0,210,160,.10)), #ffffffaa;
+      border-bottom:1px solid var(--line);
+      backdrop-filter:saturate(1.2) blur(2px);
+      position:sticky; top:0; z-index:5;
+    }
+    header img{width:44px;height:44px;border-radius:10px;box-shadow:0 3px 10px rgba(0,0,0,.06)}
+    header h3{margin:0;font-size:1.15rem}
+    header small{color:var(--muted)}
+    .wrap{max-width:980px;margin:12px auto 96px;padding:0 12px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0;box-shadow:0 8px 22px rgba(0,0,0,.05);position:relative}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .pill{padding:4px 10px;border-radius:999px;background:#eaf4ff;color:#0b4a7a;font-size:12px;border:1px solid var(--line)}
+    button{border:none;border-radius:12px;padding:10px 14px;cursor:pointer;font-weight:800}
+    button.red{background:var(--red);color:#fff}
+    button.green{background:var(--green);color:#003326}
+    button.blue{background:var(--blue);color:#fff}
+    button.ghost{background:#eef6ff;color:#0f3c6e}
+    button:disabled{opacity:.85;filter:saturate(.85);cursor:not-allowed}
+    small{opacity:.85;color:var(--muted)}
+    .empty{opacity:.8;text-align:center;padding:16px}
+    .tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .value{font-weight:700}
+    .section-title{margin:10px 0 0;font-size:.95rem;color:#123}
+    .queue-col{position:absolute;top:10px;right:10px;display:flex;flex-direction:column;align-items:center;gap:6px}
+    .queue-badge{min-width:38px;height:38px;display:grid;place-items:center;background:#ffb020;color:#111;font-weight:900;border-radius:10px;border:1px solid #e09a1c;font-size:18px;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+    .queue-time{font-size:12px;color:var(--muted);font-weight:800}
+  
+    /* Old settings system transferred from adminold */
+    #settingsFab{
+      position:fixed;bottom:18px;left:16px;z-index:60;
+      padding:10px 14px;border-radius:999px;display:flex;align-items:center;gap:6px;
+      box-shadow:0 8px 22px rgba(15,23,42,.25);font-size:13px;border:none;cursor:pointer;
+      font-weight:800;color:#fff;background:#0f172a;
+    }
+    #settingsFab span.icon{font-size:16px}
+    #settingsBackdrop,#whBackdrop,#reportBackdrop,#priceBackdrop{
+      position:fixed;inset:0;background:rgba(15,23,42,.35);display:none;
+    }
+    #settingsBackdrop{z-index:70}
+    #whBackdrop{z-index:48}
+    #reportBackdrop{z-index:52}
+    #priceBackdrop{z-index:72}
+
+    #settingsModal,#whModal,#reportModal,#priceModal{
+      position:fixed;inset:0;display:none;place-items:center;pointer-events:none;
+    }
+    #settingsModal{z-index:71}
+    #whModal{z-index:50}
+    #reportModal{z-index:53}
+    #priceModal{z-index:73}
+
+    #settingsModal .settings-box,
+    #whModal .wh-box,
+    #reportModal .report-box,
+    #priceModal .price-box{
+      width:min(800px,96vw);max-height:88vh;overflow:auto;background:#fff;border-radius:18px;
+      padding:16px 14px 14px;box-shadow:0 16px 46px rgba(15,23,42,.32);pointer-events:auto;
+    }
+    #settingsModal .settings-box,#priceModal .price-box{width:min(420px,94vw)}
+    .settings-title,.wh-title,.report-title,.price-title{
+      display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;
+    }
+    .settings-title h4,.wh-title h4,.report-title h4,.price-title h4{margin:0;font-size:15px}
+    .settings-close,.wh-close,.report-close,.price-close{
+      border:none;background:transparent;font-size:20px;cursor:pointer
+    }
+    .settings-pin-info,.wh-mini,.price-body,.wh-muted{font-size:12px;color:#6b7280}
+    .settings-pin-row{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+    #settingsPinInput{
+      flex:1;padding:6px 8px;border-radius:10px;border:1px solid #e5e7eb;font-size:14px;
+      text-align:center;letter-spacing:4px;
+    }
+    #settingsPinError{font-size:11px;color:#ef4444;display:none;margin-bottom:8px}
+    .settings-actions{margin-top:8px;display:flex;flex-direction:column;gap:8px}
+    .settings-actions button{
+      width:100%;padding:9px 12px;border-radius:12px;border:none;font-size:13px;font-weight:700;
+      cursor:pointer;display:flex;align-items:center;justify-content:space-between;color:#fff;
+    }
+    .settings-actions button .left{display:flex;align-items:center;gap:8px}
+    .settings-actions button .icon{font-size:17px}
+    .settings-actions .settings-report{background:#0ea5e9}
+    .settings-actions .settings-hours{background:#10b981}
+    .settings-actions .settings-price{background:#f97316}
+
+    .wh-grid{margin-top:10px;display:flex;flex-direction:column;gap:8px;font-size:12px}
+    .wh-row{
+      display:grid;grid-template-columns:72px 1fr 1.6fr 1.8fr;gap:6px;align-items:center;
+      padding:6px 8px;border-radius:10px;border:1px solid #e5e7eb;background:#f9fafb;
+    }
+    .wh-day-label{font-weight:700;color:#111827;font-size:11px}
+    .wh-period{display:flex;align-items:center;gap:4px;font-size:11px;color:#374151}
+    .wh-period input[type="time"]{padding:4px 6px;border-radius:6px;border:1px solid #e5e7eb;font-size:11px}
+    .wh-switch{display:flex;align-items:center;gap:4px;font-size:10px}
+    .wh-switch input{accent-color:#0ea5e9}
+    .wh-actions,.price-actions{margin-top:10px;display:flex;justify-content:flex-end;gap:8px}
+    .wh-btn,.report-btn,#priceSaveBtn{
+      padding:7px 12px;border-radius:10px;border:none;font-size:12px;font-weight:700;cursor:pointer;
+    }
+    .wh-btn.secondary{background:#f3f4ff;color:#111827;border:1px solid #e5e7eb}
+    .wh-btn.primary,.report-btn.load,#priceSaveBtn{background:#0ea5e9;color:#fff}
+    .report-btn.pdf{background:#111827;color:#fff}
+    .report-filters{margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px}
+    .report-filters input[type="date"]{padding:6px 8px;border-radius:8px;border:1px solid #e5e7eb;font-size:12px}
+    .report-table-wrap{margin-top:10px}
+    table.report-table{width:100%;border-collapse:collapse;font-size:11px}
+    table.report-table thead{background:#f3f4ff}
+    table.report-table th,table.report-table td{
+      padding:6px 4px;border-bottom:1px solid #e5e7eb;text-align:center;white-space:nowrap
+    }
+    #reportTotal{margin-top:6px;font-size:12px;font-weight:700;text-align:right;display:none}
+    .price-body label{display:block;margin-top:8px;margin-bottom:4px;font-size:12px;color:#374151}
+    .price-body input[type="number"]{width:100%;padding:7px 8px;border-radius:10px;border:1px solid #e5e7eb;font-size:13px}
+    #priceStatus{font-size:11px;color:#16a34a;margin-top:4px;display:none}
+
+  </style>
+</head>
+<body>
+<header>
+  <img src="https://i.ibb.co/99wTQ0GR/IMG-1610.png" alt="Lamaa logo">
+  <div>
+    <h3>Lamaa — Admin Panel</h3>
+    <small id="permNote">🔔 Enable notifications</small>
+  </div>
+</header>
+
+
+<div class="wrap">
+  <div id="list"></div>
+</div>
+
+<button id="settingsFab">
+  <span class="icon">⚙️</span><span>Settings</span>
+</button>
+
+<div id="settingsBackdrop"></div>
+<div id="settingsModal">
+  <div class="settings-box">
+    <div class="settings-title">
+      <h4>Settings</h4>
+      <button class="settings-close" id="settingsCloseBtn">×</button>
+    </div>
+    <div id="settingsPinSection">
+      <div class="settings-pin-info">Enter the PIN to access advanced settings.</div>
+      <div class="settings-pin-row">
+        <input type="password" id="settingsPinInput" maxlength="4" inputmode="numeric" autocomplete="off" />
+        <button class="wh-btn primary" id="settingsPinSubmit">Enter</button>
+      </div>
+      <div id="settingsPinError">Incorrect PIN.</div>
+    </div>
+    <div id="settingsActions" style="display:none">
+      <div class="settings-pin-info">Choose the settings section you want to open.</div>
+      <div class="settings-actions">
+        <button class="settings-report" id="settingsReportBtn">
+          <span class="left"><span class="icon">📊</span><span>Orders report</span></span><span>Open</span>
+        </button>
+        <button class="settings-hours" id="settingsWhBtn">
+          <span class="left"><span class="icon">🕒</span><span>Working hours</span></span><span>Open</span>
+        </button>
+        <button class="settings-price" id="settingsPriceBtn">
+          <span class="left"><span class="icon">💰</span><span>Change pricing</span></span><span>Open</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="whBackdrop"></div>
+<div id="whModal">
+  <div class="wh-box">
+    <div class="wh-title">
+      <h4>Official working hours</h4>
+      <button class="wh-close" id="whCloseBtn">×</button>
+    </div>
+    <div class="wh-mini wh-muted">These hours are used to determine whether booking is available or outside business hours on the customer page.</div>
+    <div class="wh-grid" id="whGrid"></div>
+    <div class="wh-actions">
+      <button class="wh-btn secondary" id="whReset">Reset default</button>
+      <button class="wh-btn primary" id="whSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="reportBackdrop"></div>
+<div id="reportModal">
+  <div class="report-box">
+    <div class="report-title">
+      <h4>Completed orders report</h4>
+      <button class="report-close" id="reportCloseBtn">×</button>
+    </div>
+    <div class="report-filters">
+      <label>From:
+        <input type="date" id="reportFrom">
+      </label>
+      <label>To:
+        <input type="date" id="reportTo">
+      </label>
+      <button class="report-btn load" id="reportLoadBtn">Show</button>
+      <button class="report-btn pdf" id="reportPdfBtn" disabled>Export PDF</button>
+      <span class="wh-mini wh-muted">Includes only bookings with status <b>completed</b>.</span>
+    </div>
+    <div class="report-table-wrap">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Plate</th>
+            <th>Price</th>
+            <th>Duration</th>
+            <th>Distance (km)</th>
+          </tr>
+        </thead>
+        <tbody id="reportTableBody"></tbody>
+      </table>
+      <div id="reportEmpty" class="empty" style="display:none">No completed orders in this period.</div>
+      <div id="reportTotal"></div>
+    </div>
+  </div>
+</div>
+
+<div id="priceBackdrop"></div>
+<div id="priceModal">
+  <div class="price-box">
+    <div class="price-title">
+      <h4>Default pricing</h4>
+      <button class="price-close" id="priceCloseBtn">×</button>
+    </div>
+    <div class="price-body">
+      <p>These prices are stored in Firestore at <code>config/pricing</code> and can be read directly by the customer app.</p>
+
+      <label for="saloonExtInput">Saloon – Exterior wash (OMR)</label>
+      <input type="number" id="saloonExtInput" min="0" step="0.1" placeholder="Example: 4.0">
+
+      <label for="saloonIntInput">Saloon – Interior + Exterior wash (OMR)</label>
+      <input type="number" id="saloonIntInput" min="0" step="0.1" placeholder="Example: 5.0">
+
+      <label for="suvExtInput">4x4 – Exterior wash (OMR)</label>
+      <input type="number" id="suvExtInput" min="0" step="0.1" placeholder="Example: 5.0">
+
+      <label for="suvIntInput">4x4 – Interior + Exterior wash (OMR)</label>
+      <input type="number" id="suvIntInput" min="0" step="0.1" placeholder="Example: 6.0">
+
+      <div class="price-actions">
+        <button id="priceSaveBtn">Save</button>
+      </div>
+      <div id="priceStatus">Prices saved successfully.</div>
+    </div>
+  </div>
+</div>
+
+<audio id="ding" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+  // Firebase
+  const firebaseConfig = {
+      apiKey: "AIzaSyC0pxnAXa0fAEgdHC8bogWSKD5aQBRDl7Y",
+      authDomain: "carwash-f83dc.firebaseapp.com",
+      projectId: "carwash-f83dc",
+      storageBucket: "carwash-f83dc.firebasestorage.app",
+      messagingSenderId: "618205543073",
+      appId: "1:618205543073:web:3020202ef8a952e361cee0"
+    };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  window.db = db;
+  window.firebase = firebase;
+  window.__ordersAll = [];
+
+  // Desktop notifications (optional)
+  if ('Notification' in window) {
+    Notification.requestPermission().then(p=>{
+      document.getElementById('permNote').textContent =
+        (p==='granted' ? 'Notifications enabled ✅' : '🔔 Enable notifications from your browser');
+    });
+  }
+
+  const list = document.getElementById('list');
+  const ding  = document.getElementById('ding');
+
+  // State
+  const ACTIVE_STATUSES = ['pending','accepted','confirmed']; // queue
+  const live = new Map(); // id -> data
+
+  function renderFromLive(){
+    const arr = Array.from(live.values())
+      .sort((a,b)=> (a.createdAtMs||0) - (b.createdAtMs||0)); // oldest first
+    render(arr);
+  }
+
+  // Quick read test
+  db.collection('bookings').limit(1).get()
+    .then(()=>console.log('[admin] read test OK'))
+    .catch(err=>{
+      console.error('[admin] read test failed:', err);
+      list.innerHTML = `
+        <div class="card" style="border-color:#ffb4b4">
+          Failed to read bookings from Firestore (rules may block reads).<br>
+          <small>Open Console for details.</small>
+        </div>`;
+    });
+
+  // Live listener (order; filter client-side to avoid composite index)
+  let unsub = db.collection('bookings')
+    .orderBy('createdAtMs')
+    .onSnapshot(
+      snap=>{
+        const docs = [];
+        snap.forEach(d=> docs.push({ id:d.id, ...d.data() }));
+        window.__ordersAll = docs;
+        const actives = docs.filter(x => ACTIVE_STATUSES.includes(x.status));
+        live.clear();
+        actives.forEach(x => live.set(x.id, x));
+        renderFromLive();
+      },
+      err=>{
+        console.error('[admin] onSnapshot error:', err);
+        list.innerHTML = `
+          <div class="card" style="border-color:#ffb4b4">
+            Realtime updates failed: ${err.message || err}
+          </div>`;
+      }
+    );
+
+  // Helpers
+  function money(n){ return (+(n||0)).toFixed(2) + ' OMR'; }
+  function washLabel(s){
+    return s==='both' ? 'Exterior + Interior' :
+           s==='external' ? 'Exterior only' : '—';
+  }
+  function statusLabel(s){
+    return s==='pending'   ? 'Pending' :
+           s==='accepted'  ? 'Accepted' :
+           s==='confirmed' ? 'Paid/Confirmed' :
+           s==='completed' ? 'Completed' :
+           s==='rejected'  ? 'Rejected' : s;
+  }
+  function carTypeLabel(v){
+    if (v==='small' || v==='صالون') return 'small';
+    if (v==='4x4'  || v==='فورويل') return '4x4';
+    return v || '—';
+  }
+  function fmt12(input){
+    if (!input) return '—';
+    const t = (typeof input === 'number') ? input :
+              (typeof input === 'string' ? Date.parse(input) : 0);
+    if (!t) return '—';
+    const d = new Date(t);
+    return d.toLocaleString('en-US', {
+      year:'numeric', month:'short', day:'2-digit',
+      hour:'2-digit', minute:'2-digit', hour12:true
+    });
+  }
+  function openDirections(lat, lng){
+    const la = parseFloat(lat), ln = parseFloat(lng);
+    if (!Number.isFinite(la) || !Number.isFinite(ln)){
+      alert('Location is missing for this booking.');
+      return;
+    }
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${la},${ln}`;
+    window.open(url, '_blank');
+  }
+
+  function render(items){
+    list.innerHTML = '';
+    if (!items.length){
+      list.innerHTML = '<div class="empty">No (pending/accepted/paid) bookings.</div>';
+      return;
+    }
+    items.forEach((x, idx)=>{
+      const el = document.createElement('div');
+      el.className = 'card';
+      const acceptedOrPaid = (x.status === 'accepted' || x.status === 'confirmed');
+      const plate = `${(x.carCode||'').toString().toUpperCase()} ${x.carNumber||''}`.trim();
+      const position = idx + 1;
+
+      el.innerHTML = `
+        <div class="queue-col">
+          <div class="queue-badge">${position}</div>
+          <div class="queue-time">${fmt12(x.createdAtMs || x.createdAt)}</div>
+        </div>
+
+        <div class="row" style="justify-content:flex-start;">
+          <div class="pill">Status: ${statusLabel(x.status)}</div>
+        </div>
+
+        <div class="section-title">Customer</div>
+        <div class="row">
+          <div><b>Phone:</b> <span class="value">${x.phone || '—'}</span></div>
+          <div><b>Car Type:</b> <span class="value">${carTypeLabel(x.carType)}</span></div>
+          <div><b>Wash:</b> <span class="value">${washLabel(x.package)}</span></div>
+          <div><b>Price:</b> <span class="value">${money(x.price)}</span></div>
+        </div>
+
+        <div class="section-title">Vehicle</div>
+        <div class="row">
+          <div><b>Plate:</b> <span class="value">${plate || '—'}</span></div>
+        </div>
+
+        <div class="section-title">Location</div>
+        <div class="row" style="justify-content:flex-end">
+          <button class="ghost" onclick="openDirections('${x.lat}','${x.lng}')">📍 location</button>
+        </div>
+
+        <div class="tools">
+          <button class="${acceptedOrPaid?'green':'blue'}"
+                  id="assign-${x.id}"
+                  ${acceptedOrPaid?'disabled':''}
+                  onclick="markAccepted('${x.id}', this)">${acceptedOrPaid?'Accepted/Paid':'Accept'}</button>
+
+          <button class="green" id="done-${x.id}"   onclick="markCompleted('${x.id}', this)">Complete ✔</button>
+          <button class="red"   id="reject-${x.id}" onclick="markRejected('${x.id}', this)">Reject ✖</button>
+        </div>
+      `;
+      list.appendChild(el);
+    });
+  }
+
+  // Action buttons
+  async function markAccepted(id, btn){
+    if (btn && btn.classList.contains('green')) return;
+    await db.collection('bookings').doc(id).update({
+      status:'accepted', acceptedAt:new Date().toISOString()
+    });
+    if (btn){
+      btn.classList.remove('blue');
+      btn.classList.add('green');
+      btn.textContent = 'Accepted';
+      btn.disabled = true;
+    }
+  }
+
+  async function markRejected(id, btn){
+    await db.collection('bookings').doc(id).update({
+      status:'rejected', rejectedAt:new Date().toISOString()
+    });
+  }
+
+  async function markCompleted(id, btn){
+    await db.collection('bookings').doc(id).update({
+      status:'completed', completedAt:new Date().toISOString()
+    });
+  }
+
+</script>
+
+<script>
+(function(){
+  const DAYS = ["Saturday","Sunday","Monday","Tuesday","Wednesday","Thursday","Friday"];
+  const STORAGE_KEY = "businessHoursV1";
+  const HOURS_DOC = db.collection("config").doc("businessHours");
+  const PRICING_DOC = db.collection("config").doc("pricing");
+  const SECRET_PIN = "9133";
+
+  const defaultHours = [
+    {closed:false,p1:{from:"08:00",to:"13:00"},p2:{enabled:true,from:"16:00",to:"20:00"}},
+    {closed:false,p1:{from:"08:00",to:"13:00"},p2:{enabled:true,from:"16:00",to:"20:00"}},
+    {closed:false,p1:{from:"08:00",to:"13:00"},p2:{enabled:true,from:"16:00",to:"20:00"}},
+    {closed:false,p1:{from:"08:00",to:"13:00"},p2:{enabled:true,from:"16:00",to:"20:00"}},
+    {closed:false,p1:{from:"08:00",to:"13:00"},p2:{enabled:true,from:"16:00",to:"20:00"}},
+    {closed:false,p1:{from:"08:00",to:"12:00"},p2:{enabled:false,from:"",to:""}},
+    {closed:true, p1:{from:"",to:""},         p2:{enabled:false,from:"",to:""}}
+  ];
+
+  function cloneDefaultHours(){
+    return JSON.parse(JSON.stringify(defaultHours));
+  }
+
+  function parseDocHours(data){
+    if (data && Array.isArray(data.hours) && data.hours.length === 7) {
+      return data.hours;
+    }
+    if (data && (data.openTime || data.closeTime || data.bookingEnabled !== undefined)) {
+      const hours = cloneDefaultHours();
+      const openTime = data.openTime || "08:00";
+      const closeTime = data.closeTime || "20:00";
+      const bookingEnabled = data.bookingEnabled !== false;
+      return hours.map((day, idx) => {
+        if (idx === 6 || !bookingEnabled) {
+          return {closed:true,p1:{from:"",to:""},p2:{enabled:false,from:"",to:""}};
+        }
+        return {closed:false,p1:{from:openTime,to:closeTime},p2:{enabled:false,from:"",to:""}};
+      });
+    }
+    return cloneDefaultHours();
+  }
+
+  function saveLocalHours(hours){
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        hours,
+        updatedAtMs: Date.now()
+      }));
+    } catch (e) {}
+  }
+
+  function loadLocalHours(){
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length === 7) return parsed;
+      if (parsed && Array.isArray(parsed.hours) && parsed.hours.length === 7) return parsed.hours;
+    } catch (e) {}
+    return null;
+  }
+
+  function toMinutes(v){
+    if (!v || !/^\d{2}:\d{2}$/.test(v)) return null;
+    const [h,m] = v.split(":").map(Number);
+    return h * 60 + m;
+  }
+
+  function legacyFieldsFromHours(hours){
+    const opens = [];
+    const closes = [];
+    let bookingEnabled = false;
+    hours.forEach(day => {
+      if (day && !day.closed) {
+        bookingEnabled = true;
+        if (day.p1 && day.p1.from) opens.push(day.p1.from);
+        if (day.p1 && day.p1.to) closes.push(day.p1.to);
+        if (day.p2 && day.p2.enabled && day.p2.to) closes.push(day.p2.to);
+      }
+    });
+    const openTime = opens.sort((a,b)=>toMinutes(a)-toMinutes(b))[0] || "08:00";
+    const closeTime = closes.sort((a,b)=>toMinutes(b)-toMinutes(a))[0] || "20:00";
+    return { openTime, closeTime, bookingEnabled };
+  }
+
+  function buildHoursRow(i){
+    return `
+      <div class="wh-row" data-idx="${i}">
+        <div class="wh-day-label">${DAYS[i]}</div>
+        <div class="wh-switch">
+          <input type="checkbox" class="wh-closed"><span>Closed</span>
+        </div>
+        <div class="wh-period">
+          <span>1</span>
+          <input type="time" class="wh-p1-from"><span>–</span>
+          <input type="time" class="wh-p1-to">
+        </div>
+        <div class="wh-period">
+          <label><input type="checkbox" class="wh-p2-enabled"> Enable 2</label>
+          <input type="time" class="wh-p2-from"><span>–</span>
+          <input type="time" class="wh-p2-to">
+        </div>
+      </div>`;
+  }
+
+  function renderHoursGrid(container, hours){
+    container.innerHTML = "";
+    for (let i = 0; i < 7; i++) {
+      container.insertAdjacentHTML("beforeend", buildHoursRow(i));
+    }
+    container.querySelectorAll(".wh-row").forEach((row, i) => {
+      const day = hours[i] || cloneDefaultHours()[i];
+      row.querySelector(".wh-closed").checked = !!day.closed;
+      row.querySelector(".wh-p1-from").value = day.p1?.from || "";
+      row.querySelector(".wh-p1-to").value = day.p1?.to || "";
+      row.querySelector(".wh-p2-enabled").checked = !!day.p2?.enabled;
+      row.querySelector(".wh-p2-from").value = day.p2?.from || "";
+      row.querySelector(".wh-p2-to").value = day.p2?.to || "";
+    });
+  }
+
+  function collectHours(container){
+    const hours = [];
+    let ok = true;
+    container.querySelectorAll(".wh-row").forEach((row, i) => {
+      if (!ok) return;
+      const closed = row.querySelector(".wh-closed").checked;
+      const p1from = row.querySelector(".wh-p1-from").value;
+      const p1to = row.querySelector(".wh-p1-to").value;
+      const p2enabled = row.querySelector(".wh-p2-enabled").checked;
+      const p2from = row.querySelector(".wh-p2-from").value;
+      const p2to = row.querySelector(".wh-p2-to").value;
+
+      if (closed) {
+        hours[i] = {closed:true,p1:{from:"",to:""},p2:{enabled:false,from:"",to:""}};
+        return;
+      }
+
+      if (!p1from || !p1to) {
+        alert("Complete the first period for " + DAYS[i] + ".");
+        ok = false;
+        return;
+      }
+      if (toMinutes(p1to) <= toMinutes(p1from)) {
+        alert("The first period end time must be after the start time for " + DAYS[i] + ".");
+        ok = false;
+        return;
+      }
+      if (p2enabled) {
+        if (!p2from || !p2to) {
+          alert("Complete the second period for " + DAYS[i] + ".");
+          ok = false;
+          return;
+        }
+        if (toMinutes(p2to) <= toMinutes(p2from)) {
+          alert("The second period end time must be after the start time for " + DAYS[i] + ".");
+          ok = false;
+          return;
+        }
+      }
+
+      hours[i] = {
+        closed:false,
+        p1:{from:p1from,to:p1to},
+        p2:{enabled:p2enabled,from:p2from || "",to:p2to || ""}
+      };
+    });
+    return ok ? hours : null;
+  }
+
+  const settingsFab = document.getElementById("settingsFab");
+  const settingsBackdrop = document.getElementById("settingsBackdrop");
+  const settingsModal = document.getElementById("settingsModal");
+  const settingsCloseBtn = document.getElementById("settingsCloseBtn");
+  const settingsPinSection = document.getElementById("settingsPinSection");
+  const settingsActions = document.getElementById("settingsActions");
+  const settingsPinInput = document.getElementById("settingsPinInput");
+  const settingsPinSubmit = document.getElementById("settingsPinSubmit");
+  const settingsPinError = document.getElementById("settingsPinError");
+  const settingsReportBtn = document.getElementById("settingsReportBtn");
+  const settingsWhBtn = document.getElementById("settingsWhBtn");
+  const settingsPriceBtn = document.getElementById("settingsPriceBtn");
+
+  const whBackdrop = document.getElementById("whBackdrop");
+  const whModal = document.getElementById("whModal");
+  const whCloseBtn = document.getElementById("whCloseBtn");
+  const whGrid = document.getElementById("whGrid");
+  const whReset = document.getElementById("whReset");
+  const whSave = document.getElementById("whSave");
+
+  const reportBackdrop = document.getElementById("reportBackdrop");
+  const reportModal = document.getElementById("reportModal");
+  const reportCloseBtn = document.getElementById("reportCloseBtn");
+  const reportFrom = document.getElementById("reportFrom");
+  const reportTo = document.getElementById("reportTo");
+  const reportLoadBtn = document.getElementById("reportLoadBtn");
+  const reportPdfBtn = document.getElementById("reportPdfBtn");
+  const reportTableBody = document.getElementById("reportTableBody");
+  const reportEmpty = document.getElementById("reportEmpty");
+  const reportTotal = document.getElementById("reportTotal");
+
+  const priceBackdrop = document.getElementById("priceBackdrop");
+  const priceModal = document.getElementById("priceModal");
+  const priceCloseBtn = document.getElementById("priceCloseBtn");
+  const saloonExtInput = document.getElementById("saloonExtInput");
+  const saloonIntInput = document.getElementById("saloonIntInput");
+  const suvExtInput = document.getElementById("suvExtInput");
+  const suvIntInput = document.getElementById("suvIntInput");
+  const priceSaveBtn = document.getElementById("priceSaveBtn");
+  const priceStatus = document.getElementById("priceStatus");
+
+  let lastRenderedReportRows = [];
+
+  function showModal(backdrop, modal){
+    backdrop.style.display = "block";
+    modal.style.display = "grid";
+  }
+  function hideModal(backdrop, modal){
+    backdrop.style.display = "none";
+    modal.style.display = "none";
+  }
+
+  function resetSettingsState(){
+    settingsPinSection.style.display = "block";
+    settingsActions.style.display = "none";
+    settingsPinError.style.display = "none";
+    settingsPinInput.value = "";
+  }
+  function openSettings(){
+    resetSettingsState();
+    showModal(settingsBackdrop, settingsModal);
+    setTimeout(() => settingsPinInput.focus(), 50);
+  }
+  function closeSettings(){
+    hideModal(settingsBackdrop, settingsModal);
+  }
+  function handlePinSubmit(){
+    const value = (settingsPinInput.value || "").trim();
+    if (value === SECRET_PIN) {
+      settingsPinError.style.display = "none";
+      settingsPinSection.style.display = "none";
+      settingsActions.style.display = "block";
+    } else {
+      settingsPinError.style.display = "block";
+    }
+  }
+
+  async function openWorkingHours(){
+    let hours = loadLocalHours() || cloneDefaultHours();
+    try {
+      const snap = await HOURS_DOC.get();
+      if (snap.exists) {
+        hours = parseDocHours(snap.data());
+        saveLocalHours(hours);
+      }
+    } catch (e) {
+      console.warn("[settings] failed to load working hours", e);
+    }
+    renderHoursGrid(whGrid, hours);
+    showModal(whBackdrop, whModal);
+  }
+  function closeWorkingHours(){
+    hideModal(whBackdrop, whModal);
+  }
+  async function saveWorkingHours(){
+    const hours = collectHours(whGrid);
+    if (!hours) return;
+    const legacy = legacyFieldsFromHours(hours);
+    whSave.disabled = true;
+    try {
+      await HOURS_DOC.set({
+        hours,
+        ...legacy,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge:true });
+      saveLocalHours(hours);
+      closeWorkingHours();
+      alert("Working hours saved successfully.");
+    } catch (e) {
+      console.error("[settings] save working hours failed", e);
+      alert("Failed to save working hours.");
+    } finally {
+      whSave.disabled = false;
+    }
+  }
+
+  function setTodayRange(){
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    const value = `${yyyy}-${mm}-${dd}`;
+    if (!reportFrom.value) reportFrom.value = value;
+    if (!reportTo.value) reportTo.value = value;
+  }
+  function openReport(){
+    setTodayRange();
+    showModal(reportBackdrop, reportModal);
+    loadReport();
+  }
+  function closeReport(){
+    hideModal(reportBackdrop, reportModal);
+  }
+
+  function readTs(value){
+    if (!value) return null;
+    if (typeof value === "number") return new Date(value);
+    if (typeof value?.toDate === "function") return value.toDate();
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  function readPoint(obj, latKey, lngKey){
+    if (!obj) return null;
+    if (typeof obj[latKey] === "number" && typeof obj[lngKey] === "number") {
+      return { lat: obj[latKey], lng: obj[lngKey] };
+    }
+    return null;
+  }
+  function haversineKm(lat1, lon1, lat2, lon2){
+    const R = 6371;
+    const toRad = x => x * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a = Math.sin(dLat/2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+  function formatDuration(start, end){
+    if (!start || !end || end < start) return "-";
+    const minutes = Math.floor((end - start) / 60000);
+    return `${minutes} min`;
+  }
+
+  function loadReport(){
+    if (!reportFrom.value || !reportTo.value) return;
+    if (reportFrom.value > reportTo.value) {
+      alert("The start date must be before or equal to the end date.");
+      return;
+    }
+
+    const start = new Date(reportFrom.value + "T00:00:00");
+    const end = new Date(reportTo.value + "T23:59:59");
+    const all = Array.isArray(window.__ordersAll) ? window.__ordersAll : [];
+    let total = 0;
+    let count = 0;
+    lastRenderedReportRows = [];
+
+    reportTableBody.innerHTML = "";
+    reportEmpty.style.display = "none";
+    reportTotal.style.display = "none";
+    reportPdfBtn.disabled = true;
+
+    all.forEach(order => {
+      if (!order || order.status !== "completed") return;
+      const createdAt = readTs(order.createdAtMs || order.createdAt);
+      const completedAt = readTs(order.completedAt);
+      const ref = completedAt || createdAt;
+      if (!ref || ref < start || ref > end) return;
+
+      const plate = `${order.carNumber || ""} ${(order.carCode || "").toString().toUpperCase()}`.trim() || "-";
+      const rawPrice = order.price ?? order.totalPrice ?? "-";
+      const price = typeof rawPrice === "number" ? rawPrice : parseFloat(String(rawPrice).replace(/[^\d.]/g, "")) || 0;
+      total += price;
+
+      let distance = "-";
+      const lamaa = readPoint(order, "lamaaLat", "lamaaLng");
+      const client = readPoint(order, "clientLat", "clientLng");
+      if (lamaa && client) {
+        distance = haversineKm(lamaa.lat, lamaa.lng, client.lat, client.lng).toFixed(2);
+      }
+
+      count += 1;
+      const duration = formatDuration(createdAt, completedAt);
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${count}</td>
+        <td>${plate}</td>
+        <td>${typeof rawPrice === "number" ? rawPrice.toFixed(2) : rawPrice}</td>
+        <td>${duration}</td>
+        <td>${distance}</td>
+      `;
+      reportTableBody.appendChild(tr);
+
+      lastRenderedReportRows.push({
+        index: count,
+        plate,
+        price: typeof rawPrice === "number" ? rawPrice.toFixed(2) : String(rawPrice),
+        duration,
+        distance
+      });
+    });
+
+    if (!lastRenderedReportRows.length) {
+      reportEmpty.style.display = "block";
+      return;
+    }
+
+    reportTotal.style.display = "block";
+    reportTotal.textContent = `Total price: ${total.toFixed(2)} OMR`;
+    reportPdfBtn.disabled = false;
+  }
+
+  function exportReportPdf(){
+    if (!lastRenderedReportRows.length || !window.jspdf) return;
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({orientation:"p",unit:"mm",format:"a4"});
+    doc.setFontSize(14);
+    doc.text(`Completed Orders Report`, 10, 12);
+    doc.setFontSize(10);
+    doc.text(`From: ${reportFrom.value}   To: ${reportTo.value}`, 10, 18);
+
+    let y = 28;
+    doc.text("#", 10, y);
+    doc.text("Plate", 20, y);
+    doc.text("Price", 70, y);
+    doc.text("Duration", 100, y);
+    doc.text("Distance", 140, y);
+    y += 6;
+
+    lastRenderedReportRows.forEach(row => {
+      if (y > 280) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.text(String(row.index), 10, y);
+      doc.text(String(row.plate), 20, y);
+      doc.text(String(row.price), 70, y);
+      doc.text(String(row.duration), 100, y);
+      doc.text(String(row.distance), 140, y);
+      y += 5;
+    });
+
+    doc.save(`completed-orders-${reportFrom.value}-to-${reportTo.value}.pdf`);
+  }
+
+  function openPricing(){
+    showModal(priceBackdrop, priceModal);
+    priceStatus.style.display = "none";
+    loadPricing();
+  }
+  function closePricing(){
+    hideModal(priceBackdrop, priceModal);
+  }
+  function setNumberInput(input, value){
+    input.value = typeof value === "number" ? value : (value ?? "");
+  }
+  async function loadPricing(){
+    try {
+      const snap = await PRICING_DOC.get();
+      const data = snap.exists ? snap.data() : {};
+      setNumberInput(saloonExtInput, data.saloonExternal);
+      setNumberInput(saloonIntInput, data.saloonInternal);
+      setNumberInput(suvExtInput, data.suvExternal);
+      setNumberInput(suvIntInput, data.suvInternal);
+    } catch (e) {
+      console.error("[settings] load pricing failed", e);
+    }
+  }
+  function readNumber(value, label){
+    const trimmed = String(value || "").trim();
+    if (!trimmed) return null;
+    const n = Number(trimmed);
+    if (Number.isNaN(n) || n < 0) {
+      throw new Error(`Invalid value for ${label}.`);
+    }
+    return n;
+  }
+  async function savePricing(){
+    priceSaveBtn.disabled = true;
+    try {
+      const payload = {
+        saloonExternal: readNumber(saloonExtInput.value, "Saloon exterior"),
+        saloonInternal: readNumber(saloonIntInput.value, "Saloon interior"),
+        suvExternal: readNumber(suvExtInput.value, "4x4 exterior"),
+        suvInternal: readNumber(suvIntInput.value, "4x4 interior"),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      await PRICING_DOC.set(payload, { merge:true });
+      priceStatus.style.display = "block";
+      setTimeout(() => {
+        priceStatus.style.display = "none";
+      }, 2500);
+    } catch (e) {
+      console.error("[settings] save pricing failed", e);
+      alert(e.message || "Failed to save pricing.");
+    } finally {
+      priceSaveBtn.disabled = false;
+    }
+  }
+
+  settingsFab.addEventListener("click", openSettings);
+  settingsBackdrop.addEventListener("click", closeSettings);
+  settingsCloseBtn.addEventListener("click", closeSettings);
+  settingsPinSubmit.addEventListener("click", handlePinSubmit);
+  settingsPinInput.addEventListener("keydown", e => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handlePinSubmit();
+    }
+  });
+  settingsReportBtn.addEventListener("click", () => {
+    closeSettings();
+    openReport();
+  });
+  settingsWhBtn.addEventListener("click", () => {
+    closeSettings();
+    openWorkingHours();
+  });
+  settingsPriceBtn.addEventListener("click", () => {
+    closeSettings();
+    openPricing();
+  });
+
+  whBackdrop.addEventListener("click", closeWorkingHours);
+  whCloseBtn.addEventListener("click", closeWorkingHours);
+  whReset.addEventListener("click", () => renderHoursGrid(whGrid, cloneDefaultHours()));
+  whSave.addEventListener("click", saveWorkingHours);
+
+  reportBackdrop.addEventListener("click", closeReport);
+  reportCloseBtn.addEventListener("click", closeReport);
+  reportLoadBtn.addEventListener("click", loadReport);
+  reportPdfBtn.addEventListener("click", exportReportPdf);
+
+  priceBackdrop.addEventListener("click", closePricing);
+  priceCloseBtn.addEventListener("click", closePricing);
+  priceSaveBtn.addEventListener("click", savePricing);
+
+  // Keep local storage in sync if cloud updates later.
+  HOURS_DOC.onSnapshot(snap => {
+    if (!snap.exists) return;
+    const data = snap.data();
+    if (Array.isArray(data?.hours) && data.hours.length === 7) {
+      saveLocalHours(data.hours);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
